@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const emptySubscribe = () => () => {};
@@ -75,40 +74,25 @@ export function Modal({
     };
   }, [open, onClose]);
 
-  if (!mounted) return null;
+  if (!mounted || !open) return null;
 
   return createPortal(
-    <AnimatePresence>
-      {open ? (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6">
-          <motion.div
-            className="absolute inset-0 bg-black/70"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={onClose}
-          />
-          <motion.div
-            ref={panelRef}
-            role="dialog"
-            aria-modal="true"
-            aria-label={ariaLabel}
-            tabIndex={-1}
-            initial={{ opacity: 0, scale: 0.96, y: 14 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.97, y: 8 }}
-            transition={{ type: "spring", stiffness: 320, damping: 28 }}
-            className={cn(
-              "glass-strong focus-ring relative flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-3xl",
-              className,
-            )}
-          >
-            {children}
-          </motion.div>
-        </div>
-      ) : null}
-    </AnimatePresence>,
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6">
+      <div className="absolute inset-0 bg-black/70" onClick={onClose} />
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={ariaLabel}
+        tabIndex={-1}
+        className={cn(
+          "glass-strong focus-ring animate-rise relative flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-3xl",
+          className,
+        )}
+      >
+        {children}
+      </div>
+    </div>,
     document.body,
   );
 }
