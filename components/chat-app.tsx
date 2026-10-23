@@ -109,7 +109,7 @@ function AppShell() {
               onCloseMobile={() => setMobileOpen(false)}
               onOpenSettings={() => setSettingsOpen(true)}
               onOpenProfile={() => setProfileOpen(true)}
-              onOpenHelp={() => setPaletteOpen(true)}
+              onOpenSearch={() => setPaletteOpen(true)}
               onRequestDelete={(conversation) =>
                 setPendingDelete(conversation)
               }

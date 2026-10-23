@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
-import { Check, MessageSquare, Pencil, Pin, PinOff, Trash2, X } from "lucide-react";
+import { Check, Pencil, Pin, PinOff, Trash2, X } from "lucide-react";
 import type { Conversation } from "@/lib/types";
-import { cn, formatRelative } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 export function ConversationItem({
   conversation,
@@ -82,7 +81,7 @@ export function ConversationItem({
   }
 
   return (
-    <motion.div layout="position" className="group/item relative">
+    <div className="group/item relative">
       <button
         type="button"
         onClick={onSelect}
@@ -91,48 +90,16 @@ export function ConversationItem({
           setEditing(true);
         }}
         className={cn(
-          "focus-ring relative flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors duration-200",
+          "focus-ring block w-full truncate rounded-xl px-2.5 py-2 text-left text-[13px] transition-colors",
           active
-            ? "border border-white/[0.09] bg-white/[0.07]"
-            : "border border-transparent hover:bg-white/[0.045]",
+            ? "bg-white/[0.07] text-[var(--text)]"
+            : "text-[var(--muted)] hover:bg-white/[0.04] hover:text-[var(--text)]",
         )}
       >
-        {active ? (
-          <span className="absolute -left-px top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-full accent-gradient" />
-        ) : null}
-        <span
-          className={cn(
-            "flex size-8 shrink-0 items-center justify-center rounded-lg border transition-colors",
-            active
-              ? "border-[rgba(var(--accent-rgb),0.25)] bg-[rgba(var(--accent-rgb),0.14)] text-[var(--accent)]"
-              : "border-white/[0.06] bg-white/[0.035] text-[var(--faint)] group-hover/item:text-[var(--muted)]",
-          )}
-        >
-          <MessageSquare className="size-3.5" />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span
-            className={cn(
-              "block truncate text-[13px] leading-5 transition-colors",
-              active
-                ? "font-medium text-[var(--text)]"
-                : "text-[var(--muted)] group-hover/item:text-[var(--text)]",
-            )}
-          >
-            {conversation.title}
-          </span>
-          <span className="mt-0.5 flex items-center gap-1.5 text-[10px] text-[var(--faint)]">
-            {conversation.pinned ? (
-              <Pin className="size-2.5 text-[var(--accent)]" />
-            ) : null}
-            <span className="truncate">
-              {formatRelative(conversation.updatedAt)}
-            </span>
-          </span>
-        </span>
+        {conversation.title}
       </button>
 
-      <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-0.5 rounded-lg border border-[var(--border)] bg-[#0b0b14]/95 p-0.5 opacity-0 shadow-lg transition-opacity duration-150 group-hover/item:opacity-100 group-focus-within/item:opacity-100">
+      <div className="absolute right-1 top-1/2 flex -translate-y-1/2 items-center rounded-lg bg-[#13131d] opacity-0 transition-opacity duration-150 group-hover/item:opacity-100 group-focus-within/item:opacity-100">
         <button
           type="button"
           onClick={onTogglePin}
@@ -167,6 +134,6 @@ export function ConversationItem({
           <Trash2 className="size-3.5" />
         </button>
       </div>
-    </motion.div>
+    </div>
   );
 }
