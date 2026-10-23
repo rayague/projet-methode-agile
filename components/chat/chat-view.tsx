@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDown } from "lucide-react";
 import { EmptyState } from "@/components/chat/empty-state";
 import { Composer } from "@/components/chat/composer";
 import { MessageItem } from "@/components/chat/message-item";
 import { useChat } from "@/hooks/use-chat-store";
-import { formatDate } from "@/lib/utils";
 
 export function ChatView() {
   const {
@@ -70,57 +68,40 @@ export function ChatView() {
         ref={scrollRef}
         className="scroll-area min-h-0 flex-1 overflow-y-auto overscroll-contain"
       >
-        <div className="mx-auto w-full max-w-3xl px-4 pb-6 pt-4 sm:px-5">
-          {messages.length === 0 ? (
-            <EmptyState onSuggestion={sendMessage} />
-          ) : (
-            <>
-              <div className="mb-1 flex items-center gap-3">
-                <span className="h-px flex-1 bg-gradient-to-r from-transparent to-[var(--border)]" />
-                <span className="text-[9px] font-medium uppercase tracking-[0.18em] text-[var(--faint)]">
-                  {activeConversation
-                    ? formatDate(activeConversation.createdAt)
-                    : null}
-                </span>
-                <span className="h-px flex-1 bg-gradient-to-l from-transparent to-[var(--border)]" />
-              </div>
-              {messages.map((message) => (
-                <MessageItem
-                  key={message.id}
-                  message={message}
-                  canRegenerate={
-                    !isGenerating &&
-                    message.role === "assistant" &&
-                    message.id === lastId
-                  }
-                  onRegenerate={() => regenerate(message.id)}
-                />
-              ))}
-            </>
-          )}
-        </div>
+        {messages.length === 0 ? (
+          <EmptyState onSuggestion={sendMessage} />
+        ) : (
+          <div className="mx-auto w-full max-w-3xl px-4 pb-6 pt-2 sm:px-5">
+            {messages.map((message) => (
+              <MessageItem
+                key={message.id}
+                message={message}
+                canRegenerate={
+                  !isGenerating &&
+                  message.role === "assistant" &&
+                  message.id === lastId
+                }
+                onRegenerate={() => regenerate(message.id)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="relative z-10 shrink-0">
-        <div className="pointer-events-none absolute inset-x-0 -top-12 h-12 bg-gradient-to-t from-[#05050a] via-[#05050a]/80 to-transparent" />
         <Composer />
       </div>
 
-      <AnimatePresence>
-        {showScrollButton && messages.length > 0 ? (
-          <motion.button
-            type="button"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            onClick={scrollToBottom}
-            aria-label="Revenir au dernier message"
-            className="glass focus-ring absolute bottom-[142px] left-1/2 z-20 flex size-9 -translate-x-1/2 items-center justify-center rounded-full text-[var(--muted)] shadow-lg transition-colors hover:text-[var(--text)]"
-          >
-            <ArrowDown className="size-4" />
-          </motion.button>
-        ) : null}
-      </AnimatePresence>
+      {showScrollButton && messages.length > 0 ? (
+        <button
+          type="button"
+          onClick={scrollToBottom}
+          aria-label="Revenir au dernier message"
+          className="glass focus-ring absolute bottom-[120px] left-1/2 z-20 flex size-9 -translate-x-1/2 items-center justify-center rounded-full text-[var(--muted)] transition-colors hover:text-[var(--text)]"
+        >
+          <ArrowDown className="size-4" />
+        </button>
+      ) : null}
     </div>
   );
 }

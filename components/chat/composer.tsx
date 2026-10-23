@@ -10,7 +10,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowUp,
   FileText,
-  Globe,
   Image as ImageIcon,
   Mic,
   Paperclip,
@@ -20,7 +19,6 @@ import {
 } from "lucide-react";
 import { VoiceRecorder } from "@/components/overlays/voice-recorder";
 import { IconButton } from "@/components/ui/icon-button";
-import { Kbd } from "@/components/ui/kbd";
 import { useToast } from "@/components/ui/toast";
 import { useChat } from "@/hooks/use-chat-store";
 import type { Attachment } from "@/lib/types";
@@ -35,7 +33,6 @@ export function Composer() {
   const [text, setText] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [dragging, setDragging] = useState(false);
-  const [webSearch, setWebSearch] = useState(false);
   const [voiceOpen, setVoiceOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -157,7 +154,7 @@ export function Composer() {
   };
 
   return (
-    <div className="relative mx-auto w-full max-w-3xl px-3 pb-3 sm:px-5 sm:pb-5">
+    <div className="relative mx-auto w-full max-w-3xl px-3 pb-3 sm:px-5 sm:pb-4">
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -289,25 +286,7 @@ export function Composer() {
           >
             <Mic className="size-4" />
           </IconButton>
-          <button
-            type="button"
-            aria-pressed={webSearch}
-            onClick={() => setWebSearch((value) => !value)}
-            className={cn(
-              "focus-ring ml-0.5 hidden h-8 items-center gap-1.5 rounded-lg border px-2 text-[11px] font-medium transition-colors sm:flex",
-              webSearch
-                ? "border-[rgba(var(--accent-rgb),0.3)] bg-[rgba(var(--accent-rgb),0.12)] text-[var(--accent)]"
-                : "border-transparent text-[var(--muted)] hover:bg-white/[0.05] hover:text-[var(--text)]",
-            )}
-          >
-            <Globe className="size-3.5" />
-            Recherche web
-          </button>
-
-          <span className="ml-auto hidden items-center gap-1.5 pr-1 text-[10px] text-[var(--faint)] md:flex">
-            <Kbd>Entrée</Kbd>
-            <span>pour envoyer</span>
-          </span>
+          <span className="flex-1" />
 
           {isGenerating ? (
             <button
@@ -331,10 +310,8 @@ export function Composer() {
         </div>
       </form>
 
-      <p className="mt-2 text-center text-[10px] leading-relaxed text-[var(--faint)]">
+      <p className="mt-2 text-center text-[10px] text-[var(--faint)]">
         XScrum AI peut se tromper. Vérifiez les informations importantes.
-        <span className="mx-1 text-white/15">·</span>
-        <span className="text-[var(--muted)]">Données locales, aucune fuite.</span>
       </p>
 
       <VoiceRecorder

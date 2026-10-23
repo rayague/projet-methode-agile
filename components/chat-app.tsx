@@ -119,7 +119,6 @@ function AppShell() {
               <ChatHeader
                 panelOpen={panelOpen}
                 onOpenSidebar={openMobileSidebar}
-                onOpenPalette={() => setPaletteOpen(true)}
                 onTogglePanel={() => setPanelOpen(!panelOpen)}
               />
               <ChatView />
