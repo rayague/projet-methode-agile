@@ -60,7 +60,7 @@ export function ContextPanel({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-black/55 backdrop-blur-sm xl:hidden"
+            className="fixed inset-0 z-40 bg-black/55 xl:hidden"
             onClick={onClose}
           />
         ) : null}
@@ -69,7 +69,7 @@ export function ContextPanel({
       <aside
         aria-label="Panneau de contexte"
         className={cn(
-          "fixed inset-y-0 right-0 z-50 flex h-dvh w-[320px] shrink-0 flex-col border-l border-[var(--border)] bg-[#07070f]/92 backdrop-blur-2xl transition-transform duration-300 ease-out xl:static xl:z-20 xl:translate-x-0",
+          "fixed inset-y-0 right-0 z-50 flex h-dvh w-[320px] shrink-0 flex-col border-l border-[var(--border)] bg-[#07070f]/96 transition-transform duration-300 ease-out xl:static xl:z-20 xl:translate-x-0",
           open
             ? "translate-x-0"
             : "translate-x-full xl:w-0 xl:overflow-hidden xl:border-0",

@@ -54,7 +54,7 @@ export function ProfileDialog({
             label="Fermer le profil"
             onClick={onClose}
             size="sm"
-            className="bg-black/20 text-white backdrop-blur-md hover:bg-black/30 hover:text-white"
+            className="bg-black/20 text-white hover:bg-black/30 hover:text-white"
           >
             <X className="size-4" />
           </IconButton>

@@ -14,7 +14,6 @@ import { ProfileDialog } from "@/components/overlays/profile-dialog";
 import { SettingsDialog } from "@/components/overlays/settings-dialog";
 import { ToastProvider, useToast } from "@/components/ui/toast";
 import { ChatProvider, useChat } from "@/hooks/use-chat-store";
-import { useMediaQuery } from "@/hooks/use-media-query";
 import type { Conversation } from "@/lib/types";
 
 function BootScreen() {
@@ -42,17 +41,15 @@ function BootScreen() {
 function AppShell() {
   const { hydrated, settings, newChat, deleteChat } = useChat();
   const { toast } = useToast();
-  const isDesktop = useMediaQuery("(min-width: 1280px)");
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [panelPreference, setPanelPreference] = useState<boolean | null>(null);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Conversation | null>(
     null,
   );
-  const panelOpen = panelPreference ?? isDesktop;
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -80,7 +77,7 @@ function AppShell() {
       }
       if (modifier && event.shiftKey && event.key.toLowerCase() === "m") {
         event.preventDefault();
-        setPanelPreference((current) => !(current ?? isDesktop));
+        setPanelOpen((current) => !current);
         return;
       }
       if (event.key === "Escape" && mobileOpen) {
@@ -89,7 +86,7 @@ function AppShell() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [mobileOpen, newChat, toast, isDesktop]);
+  }, [mobileOpen, newChat, toast]);
 
   const openMobileSidebar = useCallback(() => {
     setCollapsed(false);
@@ -99,7 +96,7 @@ function AppShell() {
   return (
     <MotionConfig reducedMotion={settings.reduceMotion ? "always" : "user"}>
       <div className="relative flex h-dvh w-full overflow-hidden bg-[var(--bg)] text-[var(--text)]">
-        <AppBackground />
+        <AppBackground reduceMotion={settings.reduceMotion} />
 
         {!hydrated ? (
           <BootScreen />
@@ -123,14 +120,14 @@ function AppShell() {
                 panelOpen={panelOpen}
                 onOpenSidebar={openMobileSidebar}
                 onOpenPalette={() => setPaletteOpen(true)}
-                onTogglePanel={() => setPanelPreference(!panelOpen)}
+                onTogglePanel={() => setPanelOpen(!panelOpen)}
               />
               <ChatView />
             </main>
 
             <ContextPanel
               open={panelOpen}
-              onClose={() => setPanelPreference(false)}
+              onClose={() => setPanelOpen(false)}
             />
           </>
         )}

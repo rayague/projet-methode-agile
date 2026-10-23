@@ -114,7 +114,7 @@ export function Sidebar({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-black/65 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-40 bg-black/65 lg:hidden"
             onClick={onCloseMobile}
           />
         ) : null}
@@ -122,7 +122,7 @@ export function Sidebar({
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex h-dvh flex-col border-r border-[var(--border)] bg-[#07070f]/88 backdrop-blur-2xl transition-[transform,width] duration-300 ease-out lg:static lg:z-20 lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex h-dvh flex-col border-r border-[var(--border)] bg-[#07070f]/95 transition-[transform,width] duration-300 ease-out lg:static lg:z-20 lg:translate-x-0",
           collapsed ? "w-[76px]" : "w-[288px]",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}

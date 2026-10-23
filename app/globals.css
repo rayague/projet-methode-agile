@@ -99,74 +99,46 @@ button:not(:disabled),
   cursor: pointer;
 }
 
+/* Static background: no blur filters, no animation — painted once. */
 .app-background {
   background:
-    radial-gradient(900px 620px at 8% -8%, rgba(var(--accent-rgb), 0.2), transparent 62%),
-    radial-gradient(760px 520px at 98% 4%, rgba(var(--accent-2-rgb), 0.16), transparent 58%),
-    radial-gradient(900px 700px at 52% 112%, rgba(var(--accent-rgb), 0.12), transparent 62%),
+    radial-gradient(900px 620px at 8% -8%, rgba(var(--accent-rgb), 0.14), transparent 62%),
+    radial-gradient(760px 520px at 98% 4%, rgba(var(--accent-2-rgb), 0.08), transparent 58%),
     #05050a;
-  transition: background 600ms ease;
 }
 
-.app-grid {
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.032) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.032) 1px, transparent 1px);
-  background-size: 58px 58px;
-  mask-image: radial-gradient(ellipse at 50% 38%, black 18%, transparent 74%);
+/* Ambient globe: large, bottom-right, partly off screen. The fade toward the
+ * content is computed in the shader, not with a CSS mask. */
+.globe-canvas {
+  width: min(118vmin, 1180px);
+  aspect-ratio: 1;
+  right: 0;
+  bottom: 0;
+  transform: translate(28%, 38%);
 }
-
-.aurora-blob {
-  position: absolute;
-  border-radius: 999px;
-  filter: blur(90px);
-  opacity: 0.45;
-  will-change: transform;
-  pointer-events: none;
+.globe-canvas.opacity-100 {
+  opacity: 0.88;
 }
-
-.animate-aurora-one {
-  animation: aurora-one 22s ease-in-out infinite alternate;
-}
-
-.animate-aurora-two {
-  animation: aurora-two 26s ease-in-out infinite alternate;
-}
-
-@keyframes aurora-one {
-  0% {
-    transform: translate3d(0, 0, 0) scale(1);
+@media (max-width: 640px) {
+  .globe-canvas {
+    width: 150vmin;
+    transform: translate(30%, 22%);
   }
-  100% {
-    transform: translate3d(60px, 40px, 0) scale(1.15);
+  .globe-canvas.opacity-100 {
+    opacity: 0.7;
   }
 }
 
-@keyframes aurora-two {
-  0% {
-    transform: translate3d(0, 0, 0) scale(1.05);
-  }
-  100% {
-    transform: translate3d(-70px, -30px, 0) scale(0.92);
-  }
-}
-
+/* Surfaces stay flat (no backdrop-filter): a blur over the animated globe
+ * would be recomputed on every frame. */
 .glass {
-  background: var(--surface);
+  background: rgba(14, 14, 24, 0.78);
   border: 1px solid var(--border);
-  backdrop-filter: blur(22px) saturate(140%);
-  -webkit-backdrop-filter: blur(22px) saturate(140%);
 }
 
 .glass-strong {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.075),
-    rgba(255, 255, 255, 0.03)
-  );
+  background: rgba(14, 14, 24, 0.9);
   border: 1px solid var(--border);
-  backdrop-filter: blur(28px) saturate(150%);
-  -webkit-backdrop-filter: blur(28px) saturate(150%);
   box-shadow: var(--shadow-panel);
 }
 

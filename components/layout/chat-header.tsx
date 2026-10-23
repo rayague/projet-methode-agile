@@ -73,7 +73,7 @@ export function ChatHeader({
   };
 
   return (
-    <header className="relative z-20 flex h-16 shrink-0 items-center gap-2 border-b border-[var(--border)] bg-[#07070f]/45 px-3 backdrop-blur-xl sm:gap-3 sm:px-5">
+    <header className="relative z-20 flex h-16 shrink-0 items-center gap-2 border-b border-[var(--border)] bg-[#07070f]/45 px-3 sm:gap-3 sm:px-5">
       <IconButton
         label="Ouvrir le menu"
         onClick={onOpenSidebar}

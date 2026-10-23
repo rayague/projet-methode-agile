@@ -183,7 +183,7 @@ export function Composer() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 rounded-[24px] border-2 border-dashed border-[rgba(var(--accent-rgb),0.6)] bg-[#07070f]/92 backdrop-blur-md"
+              className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 rounded-[24px] border-2 border-dashed border-[rgba(var(--accent-rgb),0.6)] bg-[#07070f]/96"
             >
               <span className="flex size-10 items-center justify-center rounded-2xl bg-[rgba(var(--accent-rgb),0.15)] text-[var(--accent)]">
                 <UploadCloud className="size-5" />

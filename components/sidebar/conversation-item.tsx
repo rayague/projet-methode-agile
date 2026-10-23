@@ -132,7 +132,7 @@ export function ConversationItem({
         </span>
       </button>
 
-      <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-0.5 rounded-lg border border-[var(--border)] bg-[#0b0b14]/95 p-0.5 opacity-0 shadow-lg backdrop-blur-md transition-opacity duration-150 group-hover/item:opacity-100 group-focus-within/item:opacity-100">
+      <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-0.5 rounded-lg border border-[var(--border)] bg-[#0b0b14]/95 p-0.5 opacity-0 shadow-lg transition-opacity duration-150 group-hover/item:opacity-100 group-focus-within/item:opacity-100">
         <button
           type="button"
           onClick={onTogglePin}
