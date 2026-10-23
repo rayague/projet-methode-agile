@@ -1,125 +1,95 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, Menu, PanelRight } from "lucide-react";
+import { Check, Menu } from "lucide-react";
 import { IconButton } from "@/components/ui/icon-button";
-import { useChat } from "@/hooks/use-chat-store";
-import { getModel, MODELS } from "@/lib/settings";
+import { useProjects } from "@/hooks/use-projects";
+import type { Phase } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-export function ChatHeader({
-  panelOpen,
-  onOpenSidebar,
-  onTogglePanel,
-}: {
-  panelOpen: boolean;
-  onOpenSidebar: () => void;
-  onTogglePanel: () => void;
-}) {
-  const { activeConversation, settings, updateSettings } = useChat();
-  const [modelOpen, setModelOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const model = getModel(settings.model);
+const STEPS: { phase: Phase; label: string }[] = [
+  { phase: "discovery", label: "Découverte" },
+  { phase: "synthesis", label: "Synthèse" },
+  { phase: "backlog", label: "Backlog" },
+];
 
-  useEffect(() => {
-    if (!modelOpen) return;
-    const handlePointer = (event: MouseEvent) => {
-      if (!menuRef.current?.contains(event.target as Node)) {
-        setModelOpen(false);
-      }
-    };
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setModelOpen(false);
-    };
-    document.addEventListener("mousedown", handlePointer);
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("mousedown", handlePointer);
-      document.removeEventListener("keydown", handleKey);
-    };
-  }, [modelOpen]);
+export function ChatHeader({ onOpenSidebar }: { onOpenSidebar: () => void }) {
+  const { activeProject, view, setView } = useProjects();
+  const current = STEPS.findIndex((step) => step.phase === activeProject?.phase);
+  const stories = activeProject?.backlog?.stories.filter((s) => s.statut === "active").length;
 
   return (
-    <header className="relative z-20 flex h-14 shrink-0 items-center gap-2 px-3 sm:px-5">
-      <IconButton
-        label="Ouvrir le menu"
-        onClick={onOpenSidebar}
-        className="lg:hidden"
-      >
+    <header className="relative z-20 flex h-14 shrink-0 items-center gap-3 px-3 sm:px-5">
+      <IconButton label="Ouvrir le menu" onClick={onOpenSidebar} className="lg:hidden">
         <Menu className="size-4.5" />
       </IconButton>
 
       <h1 className="min-w-0 flex-1 truncate text-sm text-[var(--muted)]">
-        {activeConversation?.title ?? ""}
+        {activeProject?.title ?? ""}
       </h1>
 
-      <div ref={menuRef} className="relative">
-        <button
-          type="button"
-          aria-haspopup="menu"
-          aria-expanded={modelOpen}
-          onClick={() => setModelOpen((value) => !value)}
-          className="focus-ring flex h-9 items-center gap-1.5 rounded-xl px-2.5 text-xs font-medium text-[var(--muted)] transition-colors hover:bg-white/[0.05] hover:text-[var(--text)]"
-        >
-          {model.name}
-          <ChevronDown
-            className={cn(
-              "size-3.5 text-[var(--faint)] transition-transform duration-200",
-              modelOpen && "rotate-180",
-            )}
-          />
-        </button>
-
-        {modelOpen ? (
-          <div
-            role="menu"
-            className="glass-strong absolute right-0 top-[calc(100%+6px)] z-50 w-64 rounded-2xl p-1.5"
-          >
-            {MODELS.map((item) => {
-              const active = item.id === settings.model;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  role="menuitemradio"
-                  aria-checked={active}
-                  onClick={() => {
-                    updateSettings({ model: item.id });
-                    setModelOpen(false);
-                  }}
+      {activeProject ? (
+        <ol aria-label="Étapes du projet" className="hidden items-center gap-1 md:flex">
+          {STEPS.map((step, index) => {
+            const done = index < current;
+            const active = index === current;
+            return (
+              <li key={step.phase} className="flex items-center gap-1">
+                {index > 0 ? <span className="h-px w-4 bg-[var(--border-strong)]" /> : null}
+                <span
+                  aria-current={active ? "step" : undefined}
                   className={cn(
-                    "focus-ring flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left transition-colors",
+                    "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px]",
                     active
-                      ? "bg-[rgba(var(--accent-rgb),0.1)]"
-                      : "hover:bg-white/[0.05]",
+                      ? "bg-[rgba(var(--accent-rgb),0.14)] text-[var(--text)]"
+                      : done
+                        ? "text-[var(--muted)]"
+                        : "text-[var(--faint)]",
                   )}
                 >
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-xs font-medium text-[var(--text)]">
-                      {item.name}
-                    </span>
-                    <span className="mt-0.5 block truncate text-[11px] text-[var(--muted)]">
-                      {item.description}
-                    </span>
-                  </span>
-                  {active ? (
-                    <Check className="size-3.5 shrink-0 text-[var(--accent)]" />
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
-        ) : null}
-      </div>
+                  {done ? (
+                    <Check className="size-3 text-[var(--success)]" />
+                  ) : (
+                    <span
+                      className={cn(
+                        "size-1.5 rounded-full",
+                        active ? "bg-[var(--accent)]" : "bg-[var(--faint)]",
+                      )}
+                    />
+                  )}
+                  {step.label}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+      ) : null}
 
-      <IconButton
-        label={panelOpen ? "Masquer le panneau" : "Afficher le panneau"}
-        onClick={onTogglePanel}
-        active={panelOpen}
-        className="hidden sm:inline-flex"
-      >
-        <PanelRight className="size-4" />
-      </IconButton>
+      {activeProject?.backlog ? (
+        <div role="tablist" className="flex rounded-xl border border-[var(--border)] p-0.5">
+          {(
+            [
+              { id: "chat", label: "Conversation" },
+              { id: "backlog", label: `Backlog · ${stories}` },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={view === tab.id}
+              onClick={() => setView(tab.id)}
+              className={cn(
+                "focus-ring rounded-lg px-2.5 py-1 text-[12px] transition-colors",
+                view === tab.id
+                  ? "bg-white/[0.08] text-[var(--text)]"
+                  : "text-[var(--muted)] hover:text-[var(--text)]",
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
     </header>
   );
 }

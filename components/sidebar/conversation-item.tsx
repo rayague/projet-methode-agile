@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check, Pencil, Pin, PinOff, Trash2, X } from "lucide-react";
-import type { Conversation } from "@/lib/types";
+import type { Project } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export function ConversationItem({
@@ -13,7 +13,7 @@ export function ConversationItem({
   onTogglePin,
   onRequestDelete,
 }: {
-  conversation: Conversation;
+  conversation: Project;
   active: boolean;
   onSelect: () => void;
   onRename: (title: string) => void;
@@ -54,7 +54,7 @@ export function ConversationItem({
           }}
           onBlur={submit}
           maxLength={80}
-          aria-label="Renommer la conversation"
+          aria-label="Renommer le projet"
           className="focus-ring min-w-0 flex-1 rounded-md bg-transparent px-1 py-0.5 text-[13px] text-[var(--text)] outline-none"
         />
         <button
@@ -104,7 +104,7 @@ export function ConversationItem({
           type="button"
           onClick={onTogglePin}
           aria-label={
-            conversation.pinned ? "Désépingler la conversation" : "Épingler la conversation"
+            conversation.pinned ? "Désépingler le projet" : "Épingler le projet"
           }
           className="focus-ring rounded-md p-1.5 text-[var(--muted)] transition-colors hover:bg-white/[0.08] hover:text-[var(--text)]"
         >
@@ -120,7 +120,7 @@ export function ConversationItem({
             setDraft(conversation.title);
             setEditing(true);
           }}
-          aria-label="Renommer la conversation"
+          aria-label="Renommer le projet"
           className="focus-ring rounded-md p-1.5 text-[var(--muted)] transition-colors hover:bg-white/[0.08] hover:text-[var(--text)]"
         >
           <Pencil className="size-3.5" />
@@ -128,7 +128,7 @@ export function ConversationItem({
         <button
           type="button"
           onClick={onRequestDelete}
-          aria-label="Supprimer la conversation"
+          aria-label="Supprimer le projet"
           className="focus-ring rounded-md p-1.5 text-[var(--muted)] transition-colors hover:bg-[rgba(251,113,133,0.14)] hover:text-[#fda4af]"
         >
           <Trash2 className="size-3.5" />

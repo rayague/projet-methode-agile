@@ -1,65 +1,40 @@
-import type { Conversation, Settings } from "@/lib/types";
+import type { Project } from "@/lib/types";
 
-const CONVERSATIONS_KEY = "xscrum.conversations.v1";
-const SETTINGS_KEY = "xscrum.settings.v1";
+const PROJECTS_KEY = "xscrum.projects.v1";
+/** Demo data of the first prototype: removed from every browser. */
+const LEGACY_KEYS = ["xscrum.conversations.v1", "xscrum.settings.v1"];
 
-function canUseStorage() {
-  return typeof window !== "undefined" && !!window.localStorage;
-}
-
-export function loadConversations(): Conversation[] | null {
-  if (!canUseStorage()) return null;
+function storage() {
   try {
-    const raw = window.localStorage.getItem(CONVERSATIONS_KEY);
-    if (!raw) return null;
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return null;
-    return parsed as Conversation[];
+    return typeof window === "undefined" ? null : window.localStorage;
   } catch {
     return null;
   }
 }
 
-export function saveConversations(conversations: Conversation[]) {
-  if (!canUseStorage()) return;
+export function loadProjects(): Project[] {
+  const store = storage();
+  if (!store) return [];
   try {
-    window.localStorage.setItem(
-      CONVERSATIONS_KEY,
-      JSON.stringify(conversations),
-    );
+    LEGACY_KEYS.forEach((key) => store.removeItem(key));
+    const parsed: unknown = JSON.parse(store.getItem(PROJECTS_KEY) ?? "[]");
+    if (!Array.isArray(parsed)) return [];
+    // A reply interrupted by a reload can never finish.
+    return (parsed as Project[]).map((project) => ({
+      ...project,
+      messages: project.messages.map((message) =>
+        message.status === "streaming" ? { ...message, status: "error" } : message,
+      ),
+    }));
   } catch {
-    // Storage can be unavailable or full — the UI keeps working in memory.
+    return [];
   }
 }
 
-export function loadSettings(): Partial<Settings> | null {
-  if (!canUseStorage()) return null;
+export function saveProjects(projects: Project[]) {
   try {
-    const raw = window.localStorage.getItem(SETTINGS_KEY);
-    if (!raw) return null;
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") return null;
-    return parsed as Partial<Settings>;
+    storage()?.setItem(PROJECTS_KEY, JSON.stringify(projects));
   } catch {
-    return null;
-  }
-}
-
-export function saveSettings(settings: Settings) {
-  if (!canUseStorage()) return;
-  try {
-    window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-  } catch {
-    // Ignore storage failures.
-  }
-}
-
-export function clearStorage() {
-  if (!canUseStorage()) return;
-  try {
-    window.localStorage.removeItem(CONVERSATIONS_KEY);
-    window.localStorage.removeItem(SETTINGS_KEY);
-  } catch {
-    // Ignore storage failures.
+    // Storage full or blocked: the app keeps working in memory.
   }
 }

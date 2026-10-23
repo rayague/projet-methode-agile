@@ -1,96 +1,40 @@
 "use client";
 
-import { useMemo, type ReactNode } from "react";
-import {
-  PanelLeftClose,
-  PanelLeftOpen,
-  Search,
-  SquarePen,
-  X,
-} from "lucide-react";
+import { useMemo } from "react";
+import { PanelLeftClose, PanelLeftOpen, SquarePen, X } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { ConversationItem } from "@/components/sidebar/conversation-item";
-import { UserCard } from "@/components/sidebar/user-card";
 import { IconButton } from "@/components/ui/icon-button";
-import { useChat } from "@/hooks/use-chat-store";
-import type { Conversation } from "@/lib/types";
+import { useProjects } from "@/hooks/use-projects";
+import type { Project } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-function byRecent(a: Conversation, b: Conversation) {
-  return b.updatedAt - a.updatedAt;
-}
-
-function SidebarAction({
-  icon,
-  label,
-  collapsed,
-  onClick,
-}: {
-  icon: ReactNode;
-  label: string;
-  collapsed: boolean;
-  onClick: () => void;
-}) {
-  if (collapsed) {
-    return (
-      <IconButton label={label} onClick={onClick} tooltipSide="right">
-        {icon}
-      </IconButton>
-    );
-  }
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="focus-ring flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-[13px] text-[var(--muted)] transition-colors hover:bg-white/[0.05] hover:text-[var(--text)]"
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
+const byRecent = (a: Project, b: Project) => b.updatedAt - a.updatedAt;
 
 export function Sidebar({
   collapsed,
   onToggleCollapse,
   mobileOpen,
   onCloseMobile,
-  onOpenSearch,
-  onOpenSettings,
-  onOpenProfile,
   onRequestDelete,
 }: {
   collapsed: boolean;
   onToggleCollapse: () => void;
   mobileOpen: boolean;
   onCloseMobile: () => void;
-  onOpenSearch: () => void;
-  onOpenSettings: () => void;
-  onOpenProfile: () => void;
-  onRequestDelete: (conversation: Conversation) => void;
+  onRequestDelete: (project: Project) => void;
 }) {
-  const {
-    conversations,
-    activeId,
-    newChat,
-    selectChat,
-    renameChat,
-    togglePin,
-  } = useChat();
+  const { projects, activeProject, newProject, selectProject, renameProject, togglePin } =
+    useProjects();
 
-  const groups = useMemo(() => {
-    const pinned = conversations.filter((item) => item.pinned).sort(byRecent);
-    const recent = conversations.filter((item) => !item.pinned).sort(byRecent);
-    return [
-      { label: "Épinglés", items: pinned },
-      { label: "Récents", items: recent },
-    ].filter((group) => group.items.length > 0);
-  }, [conversations]);
-
-  const handleSelect = (id: string) => {
-    selectChat(id);
-    onCloseMobile();
-  };
+  const groups = useMemo(
+    () =>
+      [
+        { label: "Épinglés", items: projects.filter((p) => p.pinned).sort(byRecent) },
+        { label: "Projets", items: projects.filter((p) => !p.pinned).sort(byRecent) },
+      ].filter((group) => group.items.length > 0),
+    [projects],
+  );
 
   return (
     <>
@@ -141,72 +85,63 @@ export function Sidebar({
               >
                 <PanelLeftClose className="size-4" />
               </IconButton>
-              <IconButton
-                label="Fermer le menu"
-                size="sm"
-                onClick={onCloseMobile}
-                className="lg:hidden"
-              >
+              <IconButton label="Fermer le menu" size="sm" onClick={onCloseMobile} className="lg:hidden">
                 <X className="size-4" />
               </IconButton>
             </>
           )}
         </div>
 
-        <div
-          className={cn(
-            "flex flex-col gap-0.5 px-2",
-            collapsed && "items-center",
+        <div className={cn("px-2", collapsed && "flex justify-center")}>
+          {collapsed ? (
+            <IconButton label="Nouveau projet" onClick={newProject} tooltipSide="right">
+              <SquarePen className="size-4" />
+            </IconButton>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                newProject();
+                onCloseMobile();
+              }}
+              className="focus-ring flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-[13px] text-[var(--muted)] transition-colors hover:bg-white/[0.05] hover:text-[var(--text)]"
+            >
+              <SquarePen className="size-4" />
+              Nouveau projet
+            </button>
           )}
-        >
-          <SidebarAction
-            icon={<SquarePen className="size-4" />}
-            label="Nouveau chat"
-            collapsed={collapsed}
-            onClick={() => {
-              newChat();
-              onCloseMobile();
-            }}
-          />
-          <SidebarAction
-            icon={<Search className="size-4" />}
-            label="Rechercher"
-            collapsed={collapsed}
-            onClick={onOpenSearch}
-          />
         </div>
 
         <nav
-          aria-label="Historique des conversations"
+          aria-label="Projets"
           className="scroll-area mt-4 min-h-0 flex-1 overflow-y-auto px-2 pb-3"
         >
-          {collapsed
-            ? null
-            : groups.map((group) => (
-                <div key={group.label} className="mb-4">
-                  <p className="px-2.5 pb-1 text-[11px] text-[var(--faint)]">
-                    {group.label}
-                  </p>
-                  {group.items.map((conversation) => (
-                    <ConversationItem
-                      key={conversation.id}
-                      conversation={conversation}
-                      active={conversation.id === activeId}
-                      onSelect={() => handleSelect(conversation.id)}
-                      onRename={(title) => renameChat(conversation.id, title)}
-                      onTogglePin={() => togglePin(conversation.id)}
-                      onRequestDelete={() => onRequestDelete(conversation)}
-                    />
-                  ))}
-                </div>
-              ))}
+          {collapsed ? null : groups.length === 0 ? (
+            <p className="px-2.5 text-[12px] leading-5 text-[var(--faint)]">
+              Vos projets apparaîtront ici.
+            </p>
+          ) : (
+            groups.map((group) => (
+              <div key={group.label} className="mb-4">
+                <p className="px-2.5 pb-1 text-[11px] text-[var(--faint)]">{group.label}</p>
+                {group.items.map((project) => (
+                  <ConversationItem
+                    key={project.id}
+                    conversation={project}
+                    active={project.id === activeProject?.id}
+                    onSelect={() => {
+                      selectProject(project.id);
+                      onCloseMobile();
+                    }}
+                    onRename={(title) => renameProject(project.id, title)}
+                    onTogglePin={() => togglePin(project.id)}
+                    onRequestDelete={() => onRequestDelete(project)}
+                  />
+                ))}
+              </div>
+            ))
+          )}
         </nav>
-
-        <UserCard
-          collapsed={collapsed}
-          onOpenProfile={onOpenProfile}
-          onOpenSettings={onOpenSettings}
-        />
       </aside>
     </>
   );

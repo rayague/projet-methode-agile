@@ -1,61 +1,37 @@
 "use client";
 
-import {
-  Layers,
-  RefreshCw,
-  Sparkles,
-  Target,
-  type LucideIcon,
-} from "lucide-react";
-import { useChat } from "@/hooks/use-chat-store";
-import { SUGGESTIONS } from "@/lib/seed";
-import { greeting } from "@/lib/utils";
+import { SquarePen } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useProjects } from "@/hooks/use-projects";
 
-const icons: Record<(typeof SUGGESTIONS)[number]["icon"], LucideIcon> = {
-  sparkles: Sparkles,
-  layers: Layers,
-  refresh: RefreshCw,
-  target: Target,
-};
+const STEPS = ["Décrivez votre projet", "Validez la synthèse", "Obtenez le backlog"];
 
-export function EmptyState({
-  onSuggestion,
-}: {
-  onSuggestion: (prompt: string) => void;
-}) {
-  const { settings } = useChat();
-  const firstName = settings.displayName.split(" ")[0];
+/** Home page: one action, start a project. */
+export function EmptyState() {
+  const { newProject } = useProjects();
 
   return (
-    <div className="animate-rise mx-auto flex min-h-full w-full max-w-xl flex-col items-center justify-center px-4 py-12">
-      <h2 className="text-balance text-center text-2xl font-medium tracking-tight text-[var(--text)] sm:text-[28px]">
-        {greeting()}
-        {firstName ? (
-          <>
-            , <span className="accent-text">{firstName}</span>
-          </>
-        ) : null}
+    <div className="animate-rise mx-auto flex min-h-full w-full max-w-xl flex-col items-center justify-center px-4 py-12 text-center">
+      <h2 className="text-balance text-[28px] font-medium leading-tight tracking-tight text-[var(--text)] sm:text-[34px]">
+        De votre idée au <span className="accent-text">backlog Scrum</span>
       </h2>
-      <p className="mt-2 text-sm text-[var(--muted)]">
-        Que construit-on aujourd’hui ?
+      <p className="mt-3 max-w-md text-balance text-sm leading-6 text-[var(--muted)]">
+        Décrivez votre projet avec vos mots. XScrum AI clarifie votre besoin, puis
+        génère epics, user stories, critères d’acceptation et estimations.
       </p>
-
-      <div className="mt-10 flex flex-wrap justify-center gap-2">
-        {SUGGESTIONS.map((suggestion) => {
-          const Icon = icons[suggestion.icon];
-          return (
-            <button
-              key={suggestion.title}
-              type="button"
-              onClick={() => onSuggestion(suggestion.prompt)}
-              className="focus-ring flex items-center gap-2 rounded-full border border-[var(--border)] px-3.5 py-2 text-[13px] text-[var(--muted)] transition-colors hover:border-[var(--border-strong)] hover:bg-white/[0.04] hover:text-[var(--text)]"
-            >
-              <Icon className="size-3.5 text-[var(--accent)]" />
-              {suggestion.title}
-            </button>
-          );
-        })}
-      </div>
+      <Button variant="primary" size="lg" className="mt-8" onClick={newProject}>
+        <SquarePen className="size-4" /> Nouveau projet
+      </Button>
+      <ol className="mt-10 flex flex-wrap justify-center gap-x-5 gap-y-2 text-[12px] text-[var(--faint)]">
+        {STEPS.map((step, index) => (
+          <li key={step} className="flex items-center gap-1.5">
+            <span className="flex size-4 items-center justify-center rounded-full border border-[var(--border-strong)] text-[10px]">
+              {index + 1}
+            </span>
+            {step}
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }

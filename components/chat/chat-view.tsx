@@ -1,107 +1,68 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { ArrowDown } from "lucide-react";
-import { EmptyState } from "@/components/chat/empty-state";
+import { useEffect, useRef } from "react";
 import { Composer } from "@/components/chat/composer";
+import { EmptyState } from "@/components/chat/empty-state";
 import { MessageItem } from "@/components/chat/message-item";
-import { useChat } from "@/hooks/use-chat-store";
+import { PhaseBar } from "@/components/chat/phase-bar";
+import { useProjects } from "@/hooks/use-projects";
+import type { Project } from "@/lib/types";
+
+function placeholderFor(project: Project) {
+  if (project.phase === "discovery") {
+    return project.messages.some((m) => m.role === "user")
+      ? "Répondez aux questions ou ajoutez des précisions…"
+      : "Décrivez votre projet librement…";
+  }
+  if (project.phase === "synthesis") {
+    return project.synthesisValidated
+      ? "Synthèse validée : générez le backlog."
+      : "Précisez ce qu’il faut corriger dans la synthèse…";
+  }
+  return "Ex. : découpe la US-03 en deux, ajoute une story pour l’export PDF…";
+}
 
 export function ChatView() {
-  const {
-    activeConversation,
-    sendMessage,
-    regenerate,
-    isGenerating,
-  } = useChat();
+  const { activeProject, setView } = useProjects();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const stickToBottom = useRef(true);
-  const [showScrollButton, setShowScrollButton] = useState(false);
+  const messages = activeProject?.messages;
+  const last = messages?.at(-1);
 
-  const messages = activeConversation?.messages ?? [];
-  const lastMessage = messages[messages.length - 1];
-  const lastId = lastMessage?.id;
-  const lastContent = lastMessage?.content;
-  const lastStatus = lastMessage?.status;
-  const conversationId = activeConversation?.id;
-
+  // Follows the conversation as it is written.
   useEffect(() => {
-    const element = scrollRef.current;
-    if (!element) return;
-    const handleScroll = () => {
-      const distance =
-        element.scrollHeight - element.scrollTop - element.clientHeight;
-      stickToBottom.current = distance < 140;
-      setShowScrollButton(distance > 320);
-    };
-    element.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => element.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    stickToBottom.current = true;
     const element = scrollRef.current;
     if (element) element.scrollTop = element.scrollHeight;
-  }, [conversationId]);
+  }, [activeProject?.id, messages?.length, last?.content]);
 
-  useEffect(() => {
-    if (!stickToBottom.current) return;
-    const element = scrollRef.current;
-    if (!element) return;
-    element.scrollTo({
-      top: element.scrollHeight,
-      behavior: lastStatus === "streaming" ? "auto" : "smooth",
-    });
-  }, [messages.length, lastId, lastContent, lastStatus]);
+  if (!activeProject || !messages) {
+    return (
+      <div className="scroll-area min-h-0 flex-1 overflow-y-auto">
+        <EmptyState />
+      </div>
+    );
+  }
 
-  const scrollToBottom = () => {
-    const element = scrollRef.current;
-    if (!element) return;
-    element.scrollTo({ top: element.scrollHeight, behavior: "smooth" });
-    stickToBottom.current = true;
-  };
+  const currentSynthesisId = messages.findLast((m) => m.kind === "synthesis")?.id;
+  const locked = activeProject.phase === "synthesis" && activeProject.synthesisValidated;
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col">
-      <div
-        ref={scrollRef}
-        className="scroll-area min-h-0 flex-1 overflow-y-auto overscroll-contain"
-      >
-        {messages.length === 0 ? (
-          <EmptyState onSuggestion={sendMessage} />
-        ) : (
-          <div className="mx-auto w-full max-w-3xl px-4 pb-6 pt-2 sm:px-5">
-            {messages.map((message) => (
-              <MessageItem
-                key={message.id}
-                message={message}
-                canRegenerate={
-                  !isGenerating &&
-                  message.role === "assistant" &&
-                  message.id === lastId
-                }
-                onRegenerate={() => regenerate(message.id)}
-              />
-            ))}
-          </div>
-        )}
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div ref={scrollRef} className="scroll-area min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="mx-auto w-full max-w-3xl px-4 pb-6 pt-2 sm:px-6">
+          {messages.map((message) => (
+            <MessageItem
+              key={message.id}
+              message={message}
+              currentSynthesis={message.id === currentSynthesisId}
+              onOpenBacklog={() => setView("backlog")}
+            />
+          ))}
+        </div>
       </div>
-
-      <div className="relative z-10 shrink-0">
-        <Composer />
+      <div className="relative z-10 shrink-0 pt-2">
+        <PhaseBar project={activeProject} />
+        <Composer placeholder={placeholderFor(activeProject)} disabled={locked} />
       </div>
-
-      {showScrollButton && messages.length > 0 ? (
-        <button
-          type="button"
-          onClick={scrollToBottom}
-          aria-label="Revenir au dernier message"
-          className="glass focus-ring absolute bottom-[120px] left-1/2 z-20 flex size-9 -translate-x-1/2 items-center justify-center rounded-full text-[var(--muted)] transition-colors hover:text-[var(--text)]"
-        >
-          <ArrowDown className="size-4" />
-        </button>
-      ) : null}
     </div>
   );
 }

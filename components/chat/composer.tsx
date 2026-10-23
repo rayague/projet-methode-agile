@@ -1,42 +1,15 @@
 "use client";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  type DragEvent,
-} from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  ArrowUp,
-  FileText,
-  Image as ImageIcon,
-  Mic,
-  Paperclip,
-  Square,
-  UploadCloud,
-  X,
-} from "lucide-react";
-import { VoiceRecorder } from "@/components/overlays/voice-recorder";
-import { IconButton } from "@/components/ui/icon-button";
-import { useToast } from "@/components/ui/toast";
-import { useChat } from "@/hooks/use-chat-store";
-import type { Attachment } from "@/lib/types";
-import { cn, formatBytes, uid } from "@/lib/utils";
+import { useEffect, useRef, useState } from "react";
+import { ArrowUp, Square } from "lucide-react";
+import { useProjects } from "@/hooks/use-projects";
+import { cn } from "@/lib/utils";
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const MAX_FILES = 5;
-
-export function Composer() {
-  const { sendMessage, stopGenerating, isGenerating } = useChat();
-  const { toast } = useToast();
+export function Composer({ placeholder, disabled = false }: { placeholder: string; disabled?: boolean }) {
+  const { send, stop, busy } = useProjects();
   const [text, setText] = useState("");
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [dragging, setDragging] = useState(false);
-  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [empty, setEmpty] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const timers = useRef(new Map<string, number>());
 
   useEffect(() => {
     const element = textareaRef.current;
@@ -45,291 +18,84 @@ export function Composer() {
     element.style.height = `${Math.min(element.scrollHeight, 200)}px`;
   }, [text]);
 
-  useEffect(() => {
-    const map = timers.current;
-    return () => {
-      map.forEach((timer) => window.clearInterval(timer));
-      map.clear();
-    };
-  }, []);
-
-  const uploading = attachments.some(
-    (attachment) => (attachment.progress ?? 100) < 100,
-  );
-  const canSend = (text.trim().length > 0 || attachments.length > 0) && !uploading;
-
-  const addFiles = (fileList: FileList | File[]) => {
-    const files = Array.from(fileList);
-    if (files.length === 0) return;
-    const room = MAX_FILES - attachments.length;
-    if (room <= 0) {
-      toast({
-        title: "Limite atteinte",
-        description: `Vous pouvez joindre jusqu’à ${MAX_FILES} fichiers.`,
-        variant: "error",
-      });
+  const submit = () => {
+    if (busy || disabled) return;
+    if (!text.trim()) {
+      setEmpty(true);
+      textareaRef.current?.focus();
       return;
     }
-
-    const accepted = files.slice(0, room).filter((file) => {
-      if (file.size > MAX_FILE_SIZE) {
-        toast({
-          title: "Fichier trop volumineux",
-          description: `${file.name} dépasse la limite de 10 Mo.`,
-          variant: "error",
-        });
-        return false;
-      }
-      return true;
-    });
-
-    const next = accepted.map<Attachment>((file) => ({
-      id: uid("file"),
-      name: file.name,
-      size: file.size,
-      type: file.type || "application/octet-stream",
-      url: file.type.startsWith("image/")
-        ? URL.createObjectURL(file)
-        : undefined,
-      progress: 0,
-    }));
-
-    if (next.length === 0) return;
-    setAttachments((current) => [...current, ...next]);
-
-    next.forEach((attachment) => {
-      let progress = 0;
-      const timer = window.setInterval(() => {
-        progress = Math.min(100, progress + 18 + Math.random() * 24);
-        setAttachments((current) =>
-          current.map((item) =>
-            item.id === attachment.id ? { ...item, progress } : item,
-          ),
-        );
-        if (progress >= 100) {
-          window.clearInterval(timer);
-          timers.current.delete(attachment.id);
-        }
-      }, 140);
-      timers.current.set(attachment.id, timer);
-    });
-  };
-
-  const removeAttachment = (id: string) => {
-    const timer = timers.current.get(id);
-    if (timer) {
-      window.clearInterval(timer);
-      timers.current.delete(id);
-    }
-    setAttachments((current) => {
-      const target = current.find((item) => item.id === id);
-      if (target?.url) URL.revokeObjectURL(target.url);
-      return current.filter((item) => item.id !== id);
-    });
-  };
-
-  const submit = () => {
-    if (!canSend || isGenerating) return;
-    const payload = attachments.map((attachment) => ({
-      id: attachment.id,
-      name: attachment.name,
-      size: attachment.size,
-      type: attachment.type,
-    }));
-    attachments.forEach((attachment) => {
-      if (attachment.url) URL.revokeObjectURL(attachment.url);
-    });
-    sendMessage(text, payload);
+    send(text);
     setText("");
-    setAttachments([]);
-    if (textareaRef.current) textareaRef.current.style.height = "0px";
-  };
-
-  const onDrop = (event: DragEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setDragging(false);
-    if (event.dataTransfer.files.length > 0) {
-      addFiles(event.dataTransfer.files);
-    }
   };
 
   return (
-    <div className="relative mx-auto w-full max-w-3xl px-3 pb-3 sm:px-5 sm:pb-4">
+    <div className="mx-auto w-full max-w-3xl px-3 pb-3 sm:px-5 sm:pb-4">
       <form
         onSubmit={(event) => {
           event.preventDefault();
           submit();
         }}
-        onDragOver={(event) => {
-          event.preventDefault();
-          setDragging(true);
-        }}
-        onDragLeave={(event) => {
-          if (event.currentTarget.contains(event.relatedTarget as Node)) return;
-          setDragging(false);
-        }}
-        onDrop={onDrop}
         className={cn(
-          "glass-strong relative overflow-hidden rounded-[24px] p-1.5 transition-colors duration-200",
-          dragging && "border-[rgba(var(--accent-rgb),0.55)]",
+          "glass-strong flex items-end gap-2 rounded-[22px] p-1.5 transition-colors",
+          empty && "border-[rgba(251,113,133,0.45)]",
+          disabled && "opacity-60",
         )}
       >
-        <AnimatePresence>
-          {dragging ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 rounded-[24px] border-2 border-dashed border-[rgba(var(--accent-rgb),0.6)] bg-[#07070f]/96"
-            >
-              <span className="flex size-10 items-center justify-center rounded-2xl bg-[rgba(var(--accent-rgb),0.15)] text-[var(--accent)]">
-                <UploadCloud className="size-5" />
-              </span>
-              <p className="text-xs font-medium text-[var(--text)]">
-                Déposez vos fichiers ici
-              </p>
-              <p className="text-[10px] text-[var(--faint)]">
-                PDF, images et documents · 10 Mo maximum
-              </p>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-
-        {attachments.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5 px-1.5 pb-1 pt-1">
-            {attachments.map((attachment) => {
-              const isImage = attachment.type.startsWith("image/");
-              const Icon = isImage ? ImageIcon : FileText;
-              const progress = attachment.progress ?? 100;
-              return (
-                <div
-                  key={attachment.id}
-                  className="group/file relative flex w-40 items-center gap-2 rounded-xl border border-[var(--border)] bg-white/[0.04] p-1.5 pr-6"
-                >
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[rgba(var(--accent-rgb),0.12)] text-[var(--accent)]">
-                    <Icon className="size-3.5" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[10px] font-medium text-[var(--text)]">
-                      {attachment.name}
-                    </span>
-                    {progress < 100 ? (
-                      <span className="mt-1 block h-1 w-full overflow-hidden rounded-full bg-white/10">
-                        <span
-                          className="block h-full rounded-full accent-gradient transition-[width] duration-150"
-                          style={{ width: `${progress}%` }}
-                        />
-                      </span>
-                    ) : (
-                      <span className="block text-[9px] text-[var(--faint)]">
-                        {formatBytes(attachment.size)}
-                      </span>
-                    )}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => removeAttachment(attachment.id)}
-                    aria-label={`Retirer ${attachment.name}`}
-                    className="focus-ring absolute right-1 top-1 rounded-md p-0.5 text-[var(--faint)] transition-colors hover:bg-white/[0.08] hover:text-[var(--text)]"
-                  >
-                    <X className="size-3" />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        ) : null}
-
         <textarea
+          id="composer-input"
           ref={textareaRef}
           value={text}
-          onChange={(event) => setText(event.target.value)}
+          disabled={disabled}
+          onChange={(event) => {
+            setText(event.target.value);
+            if (empty) setEmpty(false);
+          }}
           onKeyDown={(event) => {
-            if (
-              event.key === "Enter" &&
-              !event.shiftKey &&
-              !event.nativeEvent.isComposing
-            ) {
+            if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
               event.preventDefault();
               submit();
             }
           }}
           rows={1}
-          placeholder="Demandez-moi n’importe quoi sur votre projet…"
+          placeholder={placeholder}
           aria-label="Votre message"
-          className="scroll-area max-h-[200px] min-h-[52px] w-full resize-none bg-transparent px-3.5 pt-2.5 text-[13.5px] leading-6 text-[var(--text)] placeholder:text-[var(--faint)] focus:outline-none"
+          aria-invalid={empty}
+          aria-describedby={empty ? "composer-hint" : undefined}
+          className="scroll-area max-h-[200px] min-h-[44px] flex-1 resize-none bg-transparent px-3 py-2.5 text-[14px] leading-6 text-[var(--text)] placeholder:text-[var(--faint)] focus:outline-none disabled:cursor-not-allowed"
         />
-
-        <div className="flex items-center gap-1 px-1 pb-0.5">
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            hidden
-            onChange={(event) => {
-              if (event.target.files) addFiles(event.target.files);
-              event.target.value = "";
-            }}
-          />
-          <IconButton
-            label="Joindre un fichier"
-            size="sm"
-            onClick={() => fileInputRef.current?.click()}
+        {busy ? (
+          <button
+            type="button"
+            onClick={stop}
+            aria-label="Arrêter"
+            className="focus-ring mb-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border-strong)] bg-white/[0.08] text-[var(--text)] transition-colors hover:bg-white/[0.14]"
           >
-            <Paperclip className="size-4" />
-          </IconButton>
-          <IconButton
-            label="Dicter un message"
-            size="sm"
-            onClick={() => setVoiceOpen(true)}
-            active={voiceOpen}
+            <Square className="size-3.5 fill-current" />
+          </button>
+        ) : (
+          <button
+            type="submit"
+            disabled={disabled}
+            aria-label="Envoyer"
+            className="accent-gradient focus-ring mb-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl text-white transition-[filter] hover:brightness-110 disabled:opacity-40"
           >
-            <Mic className="size-4" />
-          </IconButton>
-          <span className="flex-1" />
-
-          {isGenerating ? (
-            <button
-              type="button"
-              onClick={stopGenerating}
-              aria-label="Arrêter la génération"
-              className="focus-ring ml-1 flex size-9 items-center justify-center rounded-xl border border-[var(--border-strong)] bg-white/[0.08] text-[var(--text)] transition-colors hover:bg-white/[0.14]"
-            >
-              <Square className="size-3.5 fill-current" />
-            </button>
-          ) : (
-            <button
-              type="submit"
-              disabled={!canSend}
-              aria-label="Envoyer le message"
-              className="accent-gradient focus-ring ml-1 flex size-9 items-center justify-center rounded-xl text-white shadow-[0_10px_26px_-10px_var(--accent-glow)] transition-all duration-200 hover:brightness-110 active:scale-95 disabled:pointer-events-none disabled:opacity-35"
-            >
-              <ArrowUp className="size-4" />
-            </button>
-          )}
-        </div>
+            <ArrowUp className="size-4" />
+          </button>
+        )}
       </form>
-
-      <p className="mt-2 text-center text-[10px] text-[var(--faint)]">
-        XScrum AI peut se tromper. Vérifiez les informations importantes.
+      <p
+        id="composer-hint"
+        role={empty ? "alert" : undefined}
+        className={cn(
+          "mt-2 text-center text-[11px]",
+          empty ? "text-[#fda4af]" : "text-[var(--faint)]",
+        )}
+      >
+        {empty
+          ? "Votre message est vide : écrivez quelques mots avant d’envoyer."
+          : "XScrum AI peut se tromper : relisez la synthèse et le backlog."}
       </p>
-
-      <VoiceRecorder
-        open={voiceOpen}
-        onClose={() => setVoiceOpen(false)}
-        onComplete={(transcript) => {
-          setText((current) =>
-            current ? `${current.trimEnd()} ${transcript}` : transcript,
-          );
-          setVoiceOpen(false);
-          toast({
-            title: "Transcription ajoutée",
-            description: "Vous pouvez la relire avant d’envoyer.",
-            variant: "success",
-          });
-          window.setTimeout(() => textareaRef.current?.focus(), 80);
-        }}
-      />
     </div>
   );
 }

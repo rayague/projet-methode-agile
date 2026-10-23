@@ -33,7 +33,7 @@ function whenIdle(fn: () => void) {
   return () => window.clearTimeout(id);
 }
 
-export function GlobeBackground({ reduceMotion }: { reduceMotion: boolean }) {
+export function GlobeBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -51,9 +51,7 @@ export function GlobeBackground({ reduceMotion }: { reduceMotion: boolean }) {
             canvas,
             dayUrl: "/globe/earth-day.webp",
             nightUrl: "/globe/earth-night.webp",
-            animate:
-              !reduceMotion &&
-              !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+            animate: !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
             onFirstFrame: () => {
               if (!cancelled) setVisible(true);
             },
@@ -74,7 +72,7 @@ export function GlobeBackground({ reduceMotion }: { reduceMotion: boolean }) {
       stop?.();
       setVisible(false);
     };
-  }, [reduceMotion]);
+  }, []);
 
   return (
     <div
